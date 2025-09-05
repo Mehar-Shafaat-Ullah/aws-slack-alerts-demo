@@ -24,8 +24,7 @@ phases:
 
   build:
     commands:
-      - echo "Build: construct Docker image and run smoke tests"
-      - |
+          - |
         if [ -n "$CODEBUILD_RESOLVED_SOURCE_VERSION" ]; then
           TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
         else
