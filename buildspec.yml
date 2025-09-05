@@ -9,8 +9,8 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - |
       - echo "Install phase: printing versions"
+      - |
       - node -v
       - npm -v
 
