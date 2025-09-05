@@ -24,7 +24,7 @@ phases:
 
   build:
     commands:
-          - |
+      - |
         if [ -n "$CODEBUILD_RESOLVED_SOURCE_VERSION" ]; then
           TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
         else
