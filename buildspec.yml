@@ -1,0 +1,49 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_NAME: "aws-slack-alerts-demo"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "Install phase: printing versions"
+      - node -v
+      - npm -v
+
+  pre_build:
+    commands:
+      - echo "Pre-build: installing dependencies"
+      - npm ci
+      - |
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "Docker not found — ensure CodeBuild privileged mode is enabled and using a Standard image" && exit 1
+        fi
+
+  build:
+    commands:
+      - echo "Build: construct Docker image and run smoke tests"
+      - |
+        if [ -n "$CODEBUILD_RESOLVED_SOURCE_VERSION" ]; then
+          TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+        else
+          TAG=local
+        fi
+      - docker build -t $IMAGE_NAME:$TAG .
+      - docker run -d -p 3000:3000 --name web -e COMMIT_SHA=$TAG $IMAGE_NAME:$TAG
+      - sleep 3
+      - curl -f http://localhost:3000/ || (echo "Root path failed" && docker logs web && exit 1)
+      - curl -f http://localhost:3000/version || (echo "/version failed" && docker logs web && exit 1)
+      - docker ps
+      - docker stop web && docker rm web
+
+  post_build:
+    commands:
+      - echo "Writing artifacts for CodePipeline"
+      - mkdir -p build_artifacts
+      - echo "IMAGE=$IMAGE_NAME:$TAG" > build_artifacts/build_info.txt
+artifacts:
+  files:
+    - build_artifacts/**
